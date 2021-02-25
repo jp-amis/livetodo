@@ -2,12 +2,12 @@
     <div class="mb-4">
         <div class="flex items-center mb-4" v-if="currentTask">
             <div class="pr-4 cursor-pointer" @click="backToHome">&lt;</div>
-            <h1 class="font-bold text-2xl">{{ currentTask.title }}</h1>
+            <TaskTitle :task="currentTask" class="text-2xl"/>
         </div>
         <h2 class="font-bold text-lg">Nova task</h2>
         <input
             class="w-full shadow-sm rounded px-2 py-1"
-            placeholder="Task aqui!"
+            placeholder="Enter your task..."
             @keydown.enter="createTask"
             v-model="newTask"
             type="text"
@@ -26,10 +26,11 @@ import { defineComponent, ref, computed, watch } from 'vue';
 import Task from '@/components/Task';
 import { useStore } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
+import TaskTitle from '@/components/TaskTitle';
 
 export default defineComponent({
     name: 'TaskList',
-    components: { Task },
+    components: { TaskTitle, Task },
     setup() {
         const $store = useStore();
         const $route = useRoute();
