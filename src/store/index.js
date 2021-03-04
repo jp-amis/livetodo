@@ -1,5 +1,6 @@
 import { createStore } from 'vuex';
 import VuexPersistence from 'vuex-persist';
+import moment from 'moment';
 
 const vuexLocal = new VuexPersistence({
     storage: window.localStorage,
@@ -7,108 +8,97 @@ const vuexLocal = new VuexPersistence({
 
 export default createStore({
     state: {
-        tasks: [],
+        toCheckTasks: [],
+        rootTasks: [],
+        tasks: {},
     },
     mutations: {
-        add(state, taskData) {
-            if (taskData.parentTask === null) {
-                state.tasks.push(taskData.task);
+        add(state, task) {
+            task.keyId = moment().unix();
+            state.tasks[task.id] = task;
+
+            if (task.parentId === null) {
+                state.rootTasks.push(task.id);
                 return;
             }
 
-            const task = state.tasks.find((t) => {
-                return t.id === taskData.parentTask.id;
-            });
-
-            taskData.task.parentId = task.id;
-            task.subtasks.push(taskData.task);
+            const parentTask = state.tasks[task.parentId];
+            parentTask.subtasks.push(task.id);
         },
-        toggle(state, taskData) {
-            let tasks = state.tasks;
-
-            if (taskData.parent) {
-                const task = state.tasks.find((t) => {
-                    return t.id === taskData.parent.id;
-                });
-
-                if (task) {
-                    tasks = task.subtasks;
-                }
-            }
-
-            const taskFound = tasks.find((t) => {
-                return t.id === taskData.task.id;
-            });
-
-            if (taskFound) {
-                taskFound.isDone = !taskFound.isDone;
-            }
+        toggle(state, task) {
+            const foundTask = state.tasks[task.id];
+            foundTask.isDone = !foundTask.isDone;
         },
         dueDate(state, taskData) {
-            let tasks = state.tasks;
-
-            if (taskData.parent) {
-                const task = state.tasks.find((t) => {
-                    return t.id === taskData.parent.id;
-                });
-
-                if (task) {
-                    tasks = task.subtasks;
-                }
-            }
-
-            const taskFound = tasks.find((t) => {
-                return t.id === taskData.task.id;
-            });
-
+            const taskFound = state.tasks[taskData.task.id];
             if (taskFound) {
                 taskFound.dueDate = taskData.dueDate;
             }
         },
         title(state, taskData) {
-            let tasks = state.tasks;
-
-            if (taskData.task.parentId) {
-                const task = state.tasks.find((t) => {
-                    return t.id === taskData.task.parentId;
-                });
-
-                if (task) {
-                    tasks = task.subtasks;
-                }
-            }
-            const taskFound = tasks.find((t) => {
-                return t.id === taskData.task.id;
-            });
-
+            const taskFound = state.tasks[taskData.task.id];
             if (taskFound) {
                 taskFound.title = taskData.title;
             }
         },
+        removeTaskFromCheck(state, taskId) {
+            const index = state.toCheckTasks.indexOf(taskId);
+            if (index > -1) {
+                state.toCheckTasks.splice(index, 1);
+
+                const taskFound = state.tasks[taskId];
+                if (taskFound) {
+                    taskFound.keyId = moment().unix();
+                }
+            }
+        },
+        addTaskToCheck(state, taskId) {
+            const index = state.toCheckTasks.indexOf(taskId);
+            if (index === -1) {
+                state.toCheckTasks.push(taskId);
+            }
+        }
     },
     actions: {
-        addTask({ commit }, taskData) {
-            commit('add', taskData);
+        addTask({ commit }, task) {
+            commit('add', task);
         },
-        handleParentTaskCompletion({ commit, state, getters }, childTask) {
-            const taskFound = state.tasks.find((t) => {
-                return t.id === Number(childTask.task.parentId);
-            });
-
-            if (!taskFound || taskFound.isDone) {
+        handleParentTaskCompletion({ dispatch, state, getters }, task) {
+            if (task.parentId == null) {
                 return;
             }
 
-            if (taskFound.subtasks.length == getters.countDoneSubtasks(taskFound)) {
-                commit('toggle', { task: taskFound });
+            const parentTask = state.tasks[task.parentId];
+
+            if (parentTask.isDone) {
+                return;
+            }
+
+            if (parentTask.subtasks.length == getters.countDoneSubtasks(parentTask)) {
+                dispatch('toggleTask', parentTask);
             }
         },
-        toggleTask({ commit, dispatch }, taskData) {
-            commit('toggle', taskData);
-            dispatch('handleParentTaskCompletion', taskData);
+        toggleTask({ commit, dispatch }, task) {
+            commit('toggle', task);
+            dispatch('handleParentTaskCompletion', task);
         },
-        changeDueDate({ commit }, taskData) {
+        addTaskToCheck({ commit }, task) {
+            const date = moment(task.dueDate, 'YYYY-MM-DD HH:mm', true);
+            if (date.isValid()) {
+                if (date.diff(moment(), 'seconds') > 0) {
+                    commit('addTaskToCheck', task.id);
+                }
+                return;
+            }
+
+            commit('removeTaskFromCheck', task.id);
+        },
+        updateTaskToCheck({ commit }, task) {
+            commit('removeTaskFromCheck', task.id);
+        },
+        changeDueDate({ commit, dispatch }, taskData) {
             commit('dueDate', taskData);
+            dispatch('addTaskToCheck', taskData.task);
         },
         changeTitle({ commit }, taskData) {
             commit('title', taskData);
@@ -116,40 +106,27 @@ export default createStore({
     },
     getters: {
         taskWithId: (state) => (id) => {
-            return state.tasks.find((t) => {
-                return t.id === Number(id);
-            });
+            return state.tasks[id];
         },
         subtasksOfTask: (state) => (task) => {
+            let taskIds = [];
             if (task === null) {
-                return state.tasks;
+                taskIds = state.rootTasks;
+            } else {
+                taskIds = state.tasks[task.id].subtasks;
             }
 
-            const taskFound = state.tasks.find((t) => {
-                return t.id === Number(task.id);
+            return taskIds.map((taskId) => {
+                return state.tasks[taskId];
             });
-
-            if (!taskFound) {
-                return state.tasks;
-            }
-
-            return taskFound.subtasks;
         },
         countDoneSubtasks: (state) => (task) => {
             if (task == null) {
                 return 0;
             }
 
-            const taskFound = state.tasks.find((t) => {
-                return t.id === Number(task.id);
-            });
-
-            if (!taskFound) {
-                return 0;
-            }
-
-            return taskFound.subtasks.reduce((total, subtask) => {
-                return total + (subtask.isDone ? 1 : 0);
+            return state.tasks[task.id].subtasks.reduce((total, subtaskId) => {
+                return total + (state.tasks[subtaskId].isDone ? 1 : 0);
             }, 0);
         },
     },

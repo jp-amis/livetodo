@@ -1,28 +1,21 @@
 <template>
     <div class="mb-4">
         <div class="flex items-center mb-4" v-if="currentTask">
-            <div class="pr-4 cursor-pointer" @click="backToHome">&lt;</div>
-            <TaskTitle :task="currentTask" class="text-2xl"/>
+            <div class="pr-4 cursor-pointer" @click="backToParent">&lt;</div>
+            <TaskTitle :task="currentTask" :key="currentTask.id" class="text-2xl" />
         </div>
         <h2 class="font-bold text-lg">Nova task</h2>
         <input
-            class="w-full shadow-sm rounded px-2 py-1"
-            placeholder="Enter your task..."
-            @keydown.enter="createTask"
-            v-model="newTask"
-            type="text"
+            class="w-full shadow-sm rounded px-2 py-1" placeholder="Enter your task..." @keydown.enter="createTask" v-model="newTask" type="text"
         />
     </div>
     <Task
-        v-for="task in tasks"
-        :key="task.id"
-        :parentTask="currentTask"
-        :task="task"
+        v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
     />
 </template>
 
 <script>
-import { defineComponent, ref, computed, watch } from 'vue';
+import { computed, defineComponent, ref, watch } from 'vue';
 import Task from '@/components/Task';
 import { useStore } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
@@ -50,12 +43,13 @@ export default defineComponent({
 
             currentTask.value = $store.getters.taskWithId($route.params.id);
         }
+
         loadRouteTask();
 
         watch(
             () => {
                 return $route.params;
-            }, loadRouteTask
+            }, loadRouteTask,
         );
 
         function createTask() {
@@ -63,17 +57,25 @@ export default defineComponent({
                 id: new Date().getTime(),
                 title: newTask.value,
                 isDone: false,
-                dueDate: 20200101,
+                dueDate: '',
+                parentId: null,
                 subtasks: [],
             };
-            $store.dispatch('addTask', {
-                parentTask: currentTask.value,
-                task: taskToAdd,
-            });
+
+            if (currentTask.value != null) {
+                taskToAdd.parentId = currentTask.value.id;
+            }
+
+            $store.dispatch('addTask', taskToAdd);
             newTask.value = '';
         }
 
-        function backToHome() {
+        function backToParent() {
+            if (currentTask.value != null && currentTask.value.parentId != null) {
+                $router.push(`/${currentTask.value.parentId}`);
+                return;
+            }
+
             $router.push('/');
         }
 
@@ -82,21 +84,14 @@ export default defineComponent({
             tasks,
             createTask,
             currentTask,
-            backToHome,
+            backToParent,
         };
     },
-})
+});
 </script>
 
 
-
-
-
-
-
-
-
-
+{"toCheckTasks":[],"rootTasks":[1614828809692],"tasks":[{"id":1614219967045,"title":"Task 001","isDone":true,"dueDate":20200101,"subtasks":[{"id":1614219972105,"title":"Sub 01","isDone":true,"dueDate":"2020-01-01 12:00","subtasks":[],"parentId":1614219967045},{"id":1614221262634,"title":"Sub 02","isDone":true,"dueDate":"2020-01-01 10:30","subtasks":[],"parentId":1614219967045}]}]}
 
 
 

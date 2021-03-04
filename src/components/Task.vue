@@ -18,10 +18,10 @@
                     </svg>
                     <span
                         type="text"
-                        class="ml-2 focus:outline-none"
+                        class="ml-2 focus:outline-none block w-24 min-w-max"
                         :class="{
                             'rounded': dueDateIsInvalid,
-                            'px-2': dueDateIsInvalid || dueDateIsDue || dueDateIsToday,
+                            'px-1': dueDateIsInvalid || dueDateIsDue || dueDateIsToday,
                             'border': dueDateIsInvalid,
                             'border-red-400': dueDateIsInvalid,
                             'text-white': dueDateIsToday || dueDateIsDue,
@@ -34,13 +34,13 @@
                     >
                         {{ task.dueDate }}
                     </span>
+                    <span v-if="!task.dueDate" class="absolute left-0 ml-10 text-gray-300 pointer-events-none">YYYY-MM-DD</span>
                 </div>
                 <div class="text-gray-300">|</div>
-                <div>{{ subtasksDone }}/{{ task.subtasks.length }} subtarefas</div>
+                <div class="hover:underline cursor-pointer" @click="openSubtasks">{{ subtasksDone }}/{{ task.subtasks.length }} subtarefas</div>
             </div>
         </div>
         <div
-            v-if="!parentTask"
             class="flex items-center w-10 cursor-pointer text-gray-600"
             @click="openSubtasks">
             <div class="text-right w-full">&gt;</div>
@@ -69,6 +69,10 @@ export default defineComponent({
         const dueDate = ref(props.task.dueDate);
 
         const dueDateIsInvalid = computed(() => {
+            if (!dueDate.value) {
+                return false;
+            }
+
             const date = moment(dueDate.value, 'YYYY-MM-DD HH:mm', true);
             return !date.isValid();
         });
@@ -92,27 +96,22 @@ export default defineComponent({
             }
 
             const date = moment(dueDate.value, 'YYYY-MM-DD HH:mm', true);
-            if (date.diff(moment(), 'minutes') < 0) {
+            if (date.diff(moment(), 'seconds') <= 0) {
                 return true;
             }
 
             return false;
         });
-        //     dueDateIsDue,
 
         watch(dueDate, () => {
             $store.dispatch('changeDueDate', {
                 dueDate: dueDate.value,
                 task: props.task,
-                parent: props.parentTask,
             });
         });
 
         function onClick() {
-            $store.dispatch('toggleTask', {
-                task: props.task,
-                parent: props.parentTask,
-            });
+            $store.dispatch('toggleTask', props.task);
         }
 
         function openSubtasks() {
