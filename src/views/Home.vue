@@ -1,8 +1,16 @@
 <template>
     <div class="mb-4">
-        <div class="flex items-center mb-4" v-if="currentTask">
-            <div class="pr-4 cursor-pointer" @click="backToParent">&lt;</div>
-            <TaskTitle :task="currentTask" :key="currentTask.id" class="text-2xl" />
+        <Breadcumb :task="currentTask ?? null" :key="currentTask?.id ?? 'x'" />
+        <div
+            class="flex items-center mb-4"
+            :class="{ 'justify-end': !currentTask }"
+        >
+            <div class="pr-4 cursor-pointer" @click="backToParent" v-if="currentTask">&lt;</div>
+            <TaskTitle :task="currentTask" :key="currentTask.id" class="text-2xl" v-if="currentTask" />
+            <Toolbar
+                :task="currentTask ?? null"
+                :key="currentTask?.id ?? 'x'"
+            />
         </div>
         <h2 class="font-bold text-lg">Nova task</h2>
         <input
@@ -12,6 +20,18 @@
     <Task
         v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
     />
+    <div class="flex">
+        <div class="flex-grow flex justify-center items-center">
+            <div class="border-b border-gray-300 flex-grow h-1"></div>
+        </div>
+        <div class="mx-5 text-gray-300">Archive</div>
+        <div class="flex-grow flex justify-center items-center">
+            <div class="border-b border-gray-300 flex-grow h-1"></div>
+        </div>
+    </div>
+    <Task
+        v-for="task in archivedTasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
+    />
 </template>
 
 <script>
@@ -20,10 +40,12 @@ import Task from '@/components/Task';
 import { useStore } from 'vuex';
 import { useRoute, useRouter } from 'vue-router';
 import TaskTitle from '@/components/TaskTitle';
+import Toolbar from '@/components/Toolbar';
+import Breadcumb from '@/components/Breadcumb';
 
 export default defineComponent({
     name: 'TaskList',
-    components: { TaskTitle, Task },
+    components: { Breadcumb, Toolbar, TaskTitle, Task },
     setup() {
         const $store = useStore();
         const $route = useRoute();
@@ -33,6 +55,9 @@ export default defineComponent({
         const currentTask = ref(null);
         const tasks = computed(() => {
             return $store.getters.subtasksOfTask(currentTask.value);
+        });
+        const archivedTasks = computed(() => {
+            return $store.getters.archivedTasksOfTask(currentTask.value);
         });
 
         function loadRouteTask() {
@@ -82,6 +107,7 @@ export default defineComponent({
         return {
             newTask,
             tasks,
+            archivedTasks,
             createTask,
             currentTask,
             backToParent,

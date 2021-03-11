@@ -10,6 +10,7 @@ export default createStore({
     state: {
         toCheckTasks: [],
         rootTasks: [],
+        archivedTasks: [],
         tasks: {},
     },
     mutations: {
@@ -57,6 +58,21 @@ export default createStore({
             if (index === -1) {
                 state.toCheckTasks.push(taskId);
             }
+        },
+        archive(state, task) {
+            let archivedTasks = state.archivedTasks;
+            let tasks = state.rootTasks;
+            if (task.parentId) {
+                if (!state.tasks[task.parentId].archivedTasks) {
+                    state.tasks[task.parentId].archivedTasks = [];
+                }
+
+                archivedTasks = state.tasks[task.parentId].archivedTasks;
+                tasks = state.tasks[task.parentId].subtasks;
+            }
+
+            archivedTasks.push(task.id);
+            tasks.splice(tasks.indexOf(task.id), 1);
         }
     },
     actions: {
@@ -103,6 +119,26 @@ export default createStore({
         changeTitle({ commit }, taskData) {
             commit('title', taskData);
         },
+        archive({ state, getters, commit }, archiveData) {
+            const task = archiveData.task;
+            let taskIds = [];
+            if (task === null) {
+                taskIds = state.rootTasks;
+            } else {
+                taskIds = state.tasks[task.id].subtasks;
+            }
+
+            taskIds = JSON.parse(JSON.stringify(taskIds));
+
+            for (const taskId of taskIds) {
+                const task = state.tasks[taskId];
+                if (task.isDone) {
+                    if (archiveData.archiveSubtasksUndone || getters.countDoneSubtasks(task) === task.subtasks.length) {
+                        commit('archive', task);
+                    }
+                }
+            }
+        },
     },
     getters: {
         taskWithId: (state) => (id) => {
@@ -114,6 +150,22 @@ export default createStore({
                 taskIds = state.rootTasks;
             } else {
                 taskIds = state.tasks[task.id].subtasks;
+            }
+
+            return taskIds.map((taskId) => {
+                return state.tasks[taskId];
+            });
+        },
+        archivedTasksOfTask: (state) => (task) => {
+            let taskIds = [];
+            if (task === null) {
+                taskIds = state.archivedTasks;
+            } else {
+                taskIds = state.tasks[task.id].archivedTasks;
+            }
+
+            if (!taskIds) {
+                taskIds = [];
             }
 
             return taskIds.map((taskId) => {
