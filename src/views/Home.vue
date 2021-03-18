@@ -12,15 +12,17 @@
                 :key="currentTask?.id ?? 'x'"
             />
         </div>
-        <h2 class="font-bold text-lg">Nova task</h2>
+        <h2 class="font-bold text-lg">New task</h2>
         <input
             class="w-full shadow-sm rounded px-2 py-1" placeholder="Enter your task..." @keydown.enter="createTask" v-model="newTask" type="text"
         />
     </div>
-    <Task
-        v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
-    />
-    <div class="flex">
+    <VueDraggableNext class="dragArea list-group w-full" :list="tasks">
+        <Task
+            v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
+        />
+    </VueDraggableNext>
+    <div class="flex mb-4">
         <div class="flex-grow flex justify-center items-center">
             <div class="border-b border-gray-300 flex-grow h-1"></div>
         </div>
@@ -42,10 +44,11 @@ import { useRoute, useRouter } from 'vue-router';
 import TaskTitle from '@/components/TaskTitle';
 import Toolbar from '@/components/Toolbar';
 import Breadcumb from '@/components/Breadcumb';
+import { VueDraggableNext } from 'vue-draggable-next';
 
 export default defineComponent({
     name: 'TaskList',
-    components: { Breadcumb, Toolbar, TaskTitle, Task },
+    components: { Breadcumb, Toolbar, TaskTitle, Task, VueDraggableNext },
     setup() {
         const $store = useStore();
         const $route = useRoute();

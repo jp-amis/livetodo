@@ -1,24 +1,61 @@
 <template>
     <div
-        class="bg-white mb-4 p-2 rounded shadow-sm cursor-pointer hover:shadow-md transform transition duration-500 flex">
+        class="bg-white mb-4 p-2 rounded shadow-sm cursor-pointer hover:shadow-md transform transition duration-500 flex"
+    >
+        <div class="absolute -top-3 h-6 left-0 w-full pointer-events-none flex items-center justify-center">
+            <div
+                class="pointer-events-auto bg-white shadow-md rounded py-1 px-1 flex items-center text-sm text-gray-500 gap-1"
+                @click="onClick"
+            >
+                <div class="hover:text-gray-700 transform transition w-3 h-3 hover:scale-125">
+                    <svg class="transform rotate-45 w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                </div>
+                <div class="text-gray-300">|</div>
+                <div>
+                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                </div>
+                <div>
+                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+                <div class="text-gray-300">|</div>
+                <div>
+                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+                    </svg>
+                </div>
+                <div>
+                    <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
+                    </svg>
+                </div>
+            </div>
+        </div>
         <div class="flex flex-col flex-grow">
             <div class="flex gap-2 text-lg items-center text-gray-800">
-                <div
-                    class="border-2 w-5 h-5 text-md flex items-center"
-                    @click="onClick"
-                >
-                    <div v-if="task.isDone" class="w-full text-center">&times;</div>
+                <div class="">
+                    <div
+                        class="border-2 w-5 h-5 text-md flex items-center"
+                        @click="onClick"
+                    >
+                        <div v-if="task.isDone" class="w-full text-center">&times;</div>
+                    </div>
                 </div>
-                <TaskTitle :task="task" />
+                <TaskTitle :task="task" class=""/>
             </div>
             <div class="text-sm text-gray-500 flex gap-4">
-                <div class="flex flex-row justify-center items-center">
+                <div class="flex flex-row justify-center items-center" @click="onClickDateArea">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span
-                        type="text"
-                        class="ml-2 focus:outline-none block w-24 min-w-max"
+                    <input
+                        class="ml-2 focus:outline-none block"
+                        :style="`width: ${dateSize}px`"
                         :class="{
                             'rounded': dueDateIsInvalid,
                             'px-1': dueDateIsInvalid || dueDateIsDue || dueDateIsToday,
@@ -28,22 +65,21 @@
                             'bg-yellow-500': dueDateIsToday && !dueDateIsDue,
                             'bg-red-500': dueDateIsDue,
                         }"
-                        contenteditable="true"
-                        @keyup="onKeyupDueDate"
-                        @keydown.enter="onEnterDueDate"
-                    >
-                        {{ task.dueDate }}
-                    </span>
+                        v-maska="['####-##-##', '####-##-## ##:##']"
+                        v-model="dueDate"
+                        ref="inputDate"
+                    />
                     <span v-if="!task.dueDate" class="absolute left-0 ml-10 text-gray-300 pointer-events-none">YYYY-MM-DD</span>
                 </div>
                 <div class="text-gray-300">|</div>
                 <div class="hover:underline cursor-pointer" @click="openSubtasks">{{ subtasksDone }}/{{ task.subtasks.length }} subtarefas</div>
             </div>
         </div>
+        <div class="w-10" />
         <div
-            class="flex items-center w-10 cursor-pointer text-gray-600"
+            class="flex items-center w-10 cursor-pointer text-gray-600 absolute right-0 top-0 h-full"
             @click="openSubtasks">
-            <div class="text-right w-full">&gt;</div>
+            <div class="text-right w-full mr-2">&gt;</div>
         </div>
     </div>
 </template>
@@ -66,24 +102,35 @@ export default defineComponent({
         const $store = useStore();
         const $router = useRouter();
 
+        const inputDate = ref();
+
         const dueDate = ref(props.task.dueDate);
+
+        const dateSize = computed(() => {
+            if (dueDate.value.length <= 10) {
+                return 96;
+            }
+
+            return 148;
+        });
 
         const dueDateIsInvalid = computed(() => {
             if (!dueDate.value) {
                 return false;
             }
 
-            const date = moment(dueDate.value, 'YYYY-MM-DD HH:mm', true);
-            return !date.isValid();
+            const date = $store.getters.getValidDate(dueDate.value);
+            return date === false;
         });
 
         const dueDateIsToday = computed(() => {
-            if (dueDateIsInvalid.value) {
+            const date = $store.getters.getValidDate(dueDate.value);
+
+            if (dueDateIsInvalid.value || date === false) {
                 return false;
             }
 
-            const date = moment(dueDate.value, 'YYYY-MM-DD HH:mm', true);
-            if (date.diff(moment(), 'days') === 0) {
+            if (date.format('YYYY-MM-DD') === moment().format('YYYY-MM-DD')) {
                 return true;
             }
 
@@ -91,13 +138,20 @@ export default defineComponent({
         });
 
         const dueDateIsDue = computed(() => {
-            if (dueDateIsInvalid.value) {
+            const date = $store.getters.getValidDate(dueDate.value);
+
+            if (dueDateIsInvalid.value || date === false) {
                 return false;
             }
 
-            const date = moment(dueDate.value, 'YYYY-MM-DD HH:mm', true);
-            if (date.diff(moment(), 'seconds') <= 0) {
-                return true;
+            if (date._f === 'YYYY-MM-DD') {
+                if (parseInt(date.format('YYYYMMDD')) < parseInt(moment().format('YYYYMMDD'))) {
+                    return true;
+                }
+            } else {
+                if (date.diff(moment(), 'seconds') <= 0) {
+                    return true;
+                }
             }
 
             return false;
@@ -118,25 +172,24 @@ export default defineComponent({
             $router.push(`/${props.task.id}`);
         }
 
-        function onEnterDueDate(e) {
-            e.preventDefault();
-            e.currentTarget.blur();
-        }
-
-        function onKeyupDueDate(e) {
-            dueDate.value = e.currentTarget.innerText;
+        function onClickDateArea() {
+            if (inputDate.value) {
+                inputDate.value.focus();
+            }
         }
 
         return {
             ...props,
+            inputDate,
+            dueDate,
+            dateSize,
             dueDateIsInvalid,
             dueDateIsToday,
             dueDateIsDue,
             subtasksDone: computed(() => $store.getters.countDoneSubtasks(props.task)),
             onClick,
             openSubtasks,
-            onEnterDueDate,
-            onKeyupDueDate,
+            onClickDateArea,
         };
     },
 })

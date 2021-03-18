@@ -141,6 +141,18 @@ export default createStore({
         },
     },
     getters: {
+        getValidDate: () => (date) => {
+            let momentDate = moment(date, 'YYYY-MM-DD HH:mm', true);
+
+            if (!momentDate.isValid()) {
+                momentDate = moment(date, 'YYYY-MM-DD', true);
+                if (!momentDate.isValid()) {
+                    return false;
+                }
+            }
+
+            return momentDate;
+        },
         taskWithId: (state) => (id) => {
             return state.tasks[id];
         },

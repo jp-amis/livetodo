@@ -19,11 +19,16 @@ export default defineComponent({
         function check() {
             for (const taskId of $store.state.toCheckTasks) {
                 const task = $store.getters.taskWithId(taskId);
-                const date = moment(task.dueDate, 'YYYY-MM-DD HH:mm', true);
-                if (date.isValid()) {
-                    console.log('Checking', taskId, task.dueDate);
-                    if (date.diff(moment(), 'seconds') <= 0) {
-                        $store.dispatch('updateTaskToCheck', task);
+                const date = $store.getters.getValidDate(task.dueDate);
+                if (date) {
+                    if (date._f === 'YYYY-MM-DD') {
+                        if (parseInt(date.format('YYYYMMDD')) < parseInt(moment().format('YYYYMMDD'))) {
+                            $store.dispatch('updateTaskToCheck', task);
+                        }
+                    } else {
+                        if (date.diff(moment(), 'seconds') <= 0) {
+                            $store.dispatch('updateTaskToCheck', task);
+                        }
                     }
                     return;
                 }

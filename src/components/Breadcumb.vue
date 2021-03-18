@@ -29,8 +29,13 @@ export default defineComponent({
                 let taskId = props.task.parentId;
                 while (taskId) {
                     const task = $store.state.tasks[taskId];
+                    let label = task.title;
+                    if (label.length > 22) {
+                        label = `${label.slice(0, 9)}..${label.slice(label.length - 9, label.length)}`;
+                    }
+
                     breads.push({
-                        label: task.title,
+                        label,
                         id: task.id,
                     });
 
