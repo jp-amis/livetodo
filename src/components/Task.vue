@@ -1,11 +1,15 @@
 <template>
     <div
         class="bg-white mb-4 p-2 rounded shadow-sm cursor-pointer hover:shadow-md transform transition duration-500 flex"
+        @mouseenter="onMouseEnter"
+        @mouseleave="onMouseLeave"
     >
-        <div class="absolute -top-3 h-6 left-0 w-full pointer-events-none flex items-center justify-center">
+        <div
+            class="absolute -top-3 h-6 left-0 w-full pointer-events-none flex items-center justify-center"
+            v-if="isMouseHover && !archived"
+        >
             <div
                 class="pointer-events-auto bg-white shadow-md rounded py-1 px-1 flex items-center text-sm text-gray-500 gap-1"
-                @click="onClick"
             >
                 <div class="hover:text-gray-700 transform transition w-3 h-3 hover:scale-125">
                     <svg class="transform rotate-45 w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -13,23 +17,23 @@
                     </svg>
                 </div>
                 <div class="text-gray-300">|</div>
-                <div>
+                <div class="hover:text-gray-700 transform transition w-3 h-3 hover:scale-125" @click="onClickMoveUp">
                     <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
                     </svg>
                 </div>
-                <div>
+                <div class="hover:text-gray-700 transform transition w-3 h-3 hover:scale-125" @click="onClickMoveDown">
                     <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                     </svg>
                 </div>
                 <div class="text-gray-300">|</div>
-                <div>
+                <div class="hover:text-gray-700 transform transition w-3 h-3 hover:scale-125" @click="onClickMoveTop">
                     <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
                     </svg>
                 </div>
-                <div>
+                <div class="hover:text-gray-700 transform transition w-3 h-3 hover:scale-125" @click="onClickMoveBottom">
                     <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 13l-7 7-7-7m14-8l-7 7-7-7" />
                     </svg>
@@ -72,7 +76,37 @@
                     <span v-if="!task.dueDate" class="absolute left-0 ml-10 text-gray-300 pointer-events-none">YYYY-MM-DD</span>
                 </div>
                 <div class="text-gray-300">|</div>
+                <div class="hover:underline text-gray-500" @click="toggleTags">#<span v-if="isMouseHover">tags</span><span class="text-xs" v-if="tags.length">({{ tags.length }})</span></div>
+                <div class="text-gray-300">|</div>
                 <div class="hover:underline cursor-pointer" @click="openSubtasks">{{ subtasksDone }}/{{ task.subtasks.length }} subtarefas</div>
+            </div>
+            <div class="text-sm text-gray-500 flex flex-wrap gap-2 mt-2" v-if="tagsOpen">
+                <div class="hover:underline" @click="onClickAddTag">+ Add tag</div>
+            </div>
+            <div class="text-xs text-gray-500 flex flex-wrap gap-2 mt-2" v-if="tagsOpen && tags.length">
+                <div v-for="(tag, i) of tags" :key="`tags-${i}`">
+                    <span>#</span>
+                    <contenteditable
+                        class="focus:outline-none"
+                        tag="span"
+                        :contenteditable="true"
+                        :noNL="true"
+                        :noHTML="true"
+                        v-model="tags[i]"
+                        spellcheck="false"
+                    />
+                </div>
+
+<!--                <div><span>#</span><contenteditable class="focus:outline-none" tag="span" :contenteditable="true" :noNL="true" :noHTML="true" v-model="tag" spellcheck="false"  /></div>-->
+<!--                <div>#{{ tag }}</div>-->
+<!--                <div>#woodstack</div>-->
+<!--                <div>#jcp270</div>-->
+<!--                <div>#iantina</div>-->
+<!--                <div>#woodstack</div>-->
+<!--                <div>#jcp270</div>-->
+<!--                <div>#iantina</div>-->
+<!--                <div>#woodstack</div>-->
+<!--                <div class="hover:underline">+ Add tag</div>-->
             </div>
         </div>
         <div class="w-10" />
@@ -85,22 +119,32 @@
 </template>
 
 <script>
-import { defineComponent, computed, ref, watch } from 'vue';
+import { defineComponent, computed, ref, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import moment from 'moment';
 import TaskTitle from '@/components/TaskTitle';
+import contenteditable from 'vue-contenteditable';
 
 export default defineComponent({
     name: 'Task',
-    components: { TaskTitle },
+    components: { TaskTitle, contenteditable },
     props: {
         parentTask: Object,
         task: Object,
+        archived: Boolean,
     },
     setup(props) {
+        const $internalInstance = getCurrentInstance();
+        const $emitter = $internalInstance.appContext.config.globalProperties.emitter;
+
         const $store = useStore();
         const $router = useRouter();
+
+        const isMouseHover = ref(false);
+        const tagsOpen = ref(false);
+
+        const tags = ref(props.task.tags ? props.task.tags : []);
 
         const inputDate = ref();
 
@@ -157,6 +201,18 @@ export default defineComponent({
             return false;
         });
 
+        onMounted(() => {
+            if (!props.archived) {
+                $emitter.on('toggleTags', setTagsOpen);
+            }
+        });
+
+        onUnmounted(() => {
+            if (!props.archived) {
+                $emitter.off('toggleTags', setTagsOpen);
+            }
+        });
+
         watch(dueDate, () => {
             $store.dispatch('changeDueDate', {
                 dueDate: dueDate.value,
@@ -178,6 +234,60 @@ export default defineComponent({
             }
         }
 
+        function onMouseEnter() {
+            isMouseHover.value = true;
+        }
+
+        function onMouseLeave() {
+            isMouseHover.value = false;
+        }
+
+        function onClickMoveUp() {
+            $store.dispatch('moveTask', {
+                task: props.task,
+                direction: 'UP',
+            });
+        }
+
+        function onClickMoveDown() {
+            $store.dispatch('moveTask', {
+                task: props.task,
+                direction: 'DOWN',
+            });
+        }
+
+        function onClickMoveTop() {
+            $store.dispatch('moveTask', {
+                task: props.task,
+                direction: 'TOP',
+            });
+        }
+
+        function onClickMoveBottom() {
+            $store.dispatch('moveTask', {
+                task: props.task,
+                direction: 'BOTTOM',
+            });
+        }
+
+        function setTagsOpen(v) {
+            if (tagsOpen.value === v) {
+                return;
+            }
+
+            tagsOpen.value = v;
+            $store.commit('addOpenTagsCount', tagsOpen.value ? 1 : -1);
+        }
+
+        function toggleTags() {
+            tagsOpen.value = !tagsOpen.value;
+            $store.commit('addOpenTagsCount', tagsOpen.value ? 1 : -1);
+        }
+
+        function onClickAddTag() {
+            tags.value.push('Well');
+        }
+
         return {
             ...props,
             inputDate,
@@ -190,6 +300,17 @@ export default defineComponent({
             onClick,
             openSubtasks,
             onClickDateArea,
+            onMouseEnter,
+            onMouseLeave,
+            isMouseHover,
+            onClickMoveUp,
+            onClickMoveDown,
+            onClickMoveTop,
+            onClickMoveBottom,
+            toggleTags,
+            tagsOpen,
+            onClickAddTag,
+            tags,
         };
     },
 })

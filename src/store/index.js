@@ -12,8 +12,15 @@ export default createStore({
         rootTasks: [],
         archivedTasks: [],
         tasks: {},
+        openTagsCount: 0,
     },
     mutations: {
+        resetOpenTagsCount(state) {
+          state.openTagsCount = 0;
+        },
+        addOpenTagsCount(state, count) {
+          state.openTagsCount += count;
+        },
         add(state, task) {
             task.keyId = moment().unix();
             state.tasks[task.id] = task;
@@ -73,6 +80,22 @@ export default createStore({
 
             archivedTasks.push(task.id);
             tasks.splice(tasks.indexOf(task.id), 1);
+        },
+        swapTask(state, { task, newIndex, oldIndex }) {
+            let tasks = state.rootTasks;
+            if (task.parentId !== null) {
+                tasks = state.tasks[task.parentId].subtasks;
+            }
+
+            tasks[oldIndex] = null;
+            tasks.splice(oldIndex > newIndex ? newIndex : newIndex + 1, 0, task.id);
+            tasks = tasks.filter((v) => v != null);
+
+            if (task.parentId !== null) {
+                state.tasks[task.parentId].subtasks = tasks;
+            } else {
+                state.rootTasks = tasks;
+            }
         }
     },
     actions: {
@@ -138,6 +161,34 @@ export default createStore({
                     }
                 }
             }
+        },
+        swapTask({ commit }, { task, newIndex, oldIndex }) {
+            commit('swapTask', { task, newIndex, oldIndex });
+        },
+        moveTask({ state, commit }, { task, direction }) {
+            let tasks = state.rootTasks;
+            if (task.parentId !== null) {
+                tasks = state.tasks[task.parentId].subtasks;
+            }
+
+            const oldIndex = tasks.indexOf(task.id);
+            let newIndex = -1;
+
+            if (direction === 'UP') {
+                newIndex = oldIndex - 1;
+            } else if (direction === 'DOWN') {
+                newIndex = oldIndex + 1;
+            } else if (direction === 'TOP') {
+                newIndex = 0;
+            } else if (direction === 'BOTTOM') {
+                newIndex = tasks.length - 1;
+            }
+
+            if (newIndex < 0 || newIndex >= tasks.length || newIndex === oldIndex) {
+                return;
+            }
+
+            commit('swapTask', { task, oldIndex, newIndex });
         },
     },
     getters: {

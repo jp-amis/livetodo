@@ -17,7 +17,7 @@
             class="w-full shadow-sm rounded px-2 py-1" placeholder="Enter your task..." @keydown.enter="createTask" v-model="newTask" type="text"
         />
     </div>
-    <VueDraggableNext class="dragArea list-group w-full" :list="tasks">
+    <VueDraggableNext class="dragArea list-group w-full" :list="tasks" @change="onDragTasks">
         <Task
             v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
         />
@@ -32,7 +32,7 @@
         </div>
     </div>
     <Task
-        v-for="task in archivedTasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
+        v-for="task in archivedTasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task" :archived="true"
     />
 </template>
 
@@ -64,6 +64,7 @@ export default defineComponent({
         });
 
         function loadRouteTask() {
+            $store.commit('resetOpenTagsCount');
             if (!$route.params.id) {
                 currentTask.value = null;
                 return;
@@ -88,6 +89,7 @@ export default defineComponent({
                 dueDate: '',
                 parentId: null,
                 subtasks: [],
+                tags: [],
             };
 
             if (currentTask.value != null) {
@@ -107,6 +109,18 @@ export default defineComponent({
             $router.push('/');
         }
 
+        function onDragTasks(e) {
+            if (!e.moved) {
+                return;
+            }
+
+            $store.dispatch('swapTask', {
+                task: e.moved.element,
+                oldIndex: e.moved.oldIndex,
+                newIndex: e.moved.newIndex,
+            });
+        }
+
         return {
             newTask,
             tasks,
@@ -114,6 +128,7 @@ export default defineComponent({
             createTask,
             currentTask,
             backToParent,
+            onDragTasks,
         };
     },
 });

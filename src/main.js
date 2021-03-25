@@ -4,9 +4,16 @@ import router from './router';
 import store from './store';
 import './assets/tailwind.css';
 import Maska from 'maska';
+import mitt from 'mitt';
+import contenteditable from 'vue-contenteditable'
 
-createApp(App)
+const emitter = mitt();
+
+const app = createApp(App);
+app.config.globalProperties.emitter = emitter;
+app
     .use(store)
     .use(router)
     .use(Maska)
+    .use(contenteditable)
     .mount('#app');
