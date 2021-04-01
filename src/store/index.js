@@ -43,6 +43,12 @@ export default createStore({
                 taskFound.dueDate = taskData.dueDate;
             }
         },
+        changeTags(state, taskData) {
+            const taskFound = state.tasks[taskData.task.id];
+            if (taskFound) {
+                taskFound.tags = taskData.tags;
+            }
+        },
         title(state, taskData) {
             const taskFound = state.tasks[taskData.task.id];
             if (taskFound) {
@@ -96,6 +102,21 @@ export default createStore({
             } else {
                 state.rootTasks = tasks;
             }
+        },
+        remove(state, task) {
+            let tasks = state.rootTasks;
+            if (task.parentId !== null) {
+                tasks = state.tasks[task.parentId].subtasks;
+            }
+
+            if (tasks.indexOf(task.id) === -1) {
+                tasks = state.archivedTasks;
+                if (task.parentId !== null) {
+                    tasks = state.tasks[task.parentId].archivedTasks;
+                }
+            }
+
+            tasks.splice(tasks.indexOf(task.id), 1);
         }
     },
     actions: {
@@ -138,6 +159,9 @@ export default createStore({
         changeDueDate({ commit, dispatch }, taskData) {
             commit('dueDate', taskData);
             dispatch('addTaskToCheck', taskData.task);
+        },
+        changeTags({ commit }, taskData) {
+            commit('changeTags', taskData);
         },
         changeTitle({ commit }, taskData) {
             commit('title', taskData);
@@ -189,6 +213,9 @@ export default createStore({
             }
 
             commit('swapTask', { task, oldIndex, newIndex });
+        },
+        removeTask({ commit }, task) {
+            commit('remove', task);
         },
     },
     getters: {

@@ -1,6 +1,11 @@
 <template>
     <div class="flex gap-2">
         <div class="cursor-pointer text-gray-400 hover:text-gray-500 relative select-none">
+            <svg @click="onClickSearch" class="w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+        </div>
+        <div class="cursor-pointer text-gray-400 hover:text-gray-500 relative select-none">
             <svg @click="onClickToggleTag" class="w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14" />
             </svg>
@@ -9,27 +14,38 @@
             <svg @click="onClickArchive" class="w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
             </svg>
-            <div v-if="archiveDialogIsOpen" class="absolute bg-white border rounded px-2 py-2 right-0 z-50 w-80">
-                <div class="mb-2">Do you really want to archive all done tasks?</div>
-                <div class="flex gap-2 mb-4">
-                    <div
-                        class="text-sm cursor-pointer bg-green-300 text-white rounded hover:bg-green-400 px-1 py-1"
-                        @click="onClickArchiveYes"
-                    >
-                        Yes, archive
+            <template v-if="archiveDialogIsOpen">
+                <teleport to="#confirmation-title">Do you really want to archive all done tasks?</teleport>
+                <teleport to="#confirmation-yes-button">Yes, archive</teleport>
+                <teleport to="#confirmation-no-button">No, cancel</teleport>
+                <teleport to="#confirmation-extras">
+                    <div class="text-xs flex items-center mt-4">
+                        <input class="cursor-pointer" type="checkbox" id="archive-subtask-undone" v-model="archiveSubtasksUndone"/>
+                        <label for="archive-subtask-undone" class="ml-1 cursor-pointer">Archive tasks with undone subtasks</label>
                     </div>
-                    <div
-                        class="text-sm cursor-pointer bg-red-300 text-white rounded hover:bg-red-400 px-1 py-1"
-                        @click="onClickArchiveNo"
-                    >
-                        No, cancel
-                    </div>
-                </div>
-                <div class="text-xs flex items-center">
-                    <input class="cursor-pointer" type="checkbox" id="archive-subtask-undone" v-model="archiveSubtasksUndone"/>
-                    <label for="archive-subtask-undone" class="ml-1 cursor-pointer">Archive tasks with undone subtasks</label>
-                </div>
-            </div>
+                </teleport>
+            </template>
+<!--            <div v-if="archiveDialogIsOpen" class="absolute bg-white border rounded px-2 py-2 right-0 z-50 w-80">-->
+<!--                <div class="mb-2">Do you really want to archive all done tasks?</div>-->
+<!--                <div class="flex gap-2 mb-4">-->
+<!--                    <div-->
+<!--                        class="text-sm cursor-pointer bg-green-300 text-white rounded hover:bg-green-400 px-1 py-1"-->
+<!--                        @click="onClickArchiveYes"-->
+<!--                    >-->
+<!--                        Yes, archive-->
+<!--                    </div>-->
+<!--                    <div-->
+<!--                        class="text-sm cursor-pointer bg-red-300 text-white rounded hover:bg-red-400 px-1 py-1"-->
+<!--                        @click="onClickArchiveNo"-->
+<!--                    >-->
+<!--                        No, cancel-->
+<!--                    </div>-->
+<!--                </div>-->
+<!--                <div class="text-xs flex items-center">-->
+<!--                    <input class="cursor-pointer" type="checkbox" id="archive-subtask-undone" v-model="archiveSubtasksUndone"/>-->
+<!--                    <label for="archive-subtask-undone" class="ml-1 cursor-pointer">Archive tasks with undone subtasks</label>-->
+<!--                </div>-->
+<!--            </div>-->
         </div>
     </div>
 </template>
@@ -71,11 +87,18 @@ export default defineComponent({
         }
 
         function onClickArchive() {
+            $emitter.emit('toggle-confirmation-dialog', {
+                onClose: toogleArchiveDialog,
+                onYes: onClickArchiveYes,
+                onNo: onClickArchiveNo,
+            });
             toogleArchiveDialog();
         }
 
         function onClickArchiveNo() {
-            toogleArchiveDialog();
+            $emitter.emit('toggle-confirmation-dialog', {
+                onClose: toogleArchiveDialog,
+            });
         }
 
         function onClickArchiveYes() {
@@ -84,6 +107,11 @@ export default defineComponent({
                 task: props.task,
                 archiveSubtasksUndone: archiveSubtasksUndone.value,
             });
+            $emitter.emit('toggle-confirmation-dialog');
+        }
+
+        function onClickSearch() {
+            $emitter.emit('toggle-search-bar');
         }
 
         return {
@@ -93,6 +121,7 @@ export default defineComponent({
             archiveSubtasksUndone,
             onClickArchiveYes,
             onClickArchiveNo,
+            onClickSearch,
         };
     },
 });

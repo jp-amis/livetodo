@@ -1,6 +1,6 @@
 <template>
     <div
-        class="font-bold focus:outline-none flex-grow"
+        class="font-bold focus:outline-none flex-grow whitespace-pre-wrap w-16"
         :class="{
             'line-through': task.isDone
         }"
