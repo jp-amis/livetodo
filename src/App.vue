@@ -7,20 +7,22 @@
         @onClose="onConfirmationDialogClose"
     />
     <div class="m-4">
-        <router-view />
+        <router-view v-if="!shouldShowSearch" />
+        <SearchResults v-else />
     </div>
 </template>
 
 <script>
-import { defineComponent, onMounted, onDeactivated, getCurrentInstance, ref } from 'vue';
+import { defineComponent, onMounted, onDeactivated, getCurrentInstance, ref, computed } from 'vue';
 import { useStore } from 'vuex';
 import moment from 'moment';
 import ConfirmationPopup from '@/components/ConfirmationPopup';
 import SearchBar from '@/components/SearchBar';
+import SearchResults from '@/views/SearchResults';
 
 export default defineComponent({
     name: 'App',
-    components: { SearchBar, ConfirmationPopup },
+    components: { SearchResults, SearchBar, ConfirmationPopup },
     setup() {
         const $internalInstance = getCurrentInstance();
         const $emitter = $internalInstance.appContext.config.globalProperties.emitter;
@@ -96,6 +98,10 @@ export default defineComponent({
         $emitter.on('toggle-search-bar', toggleSearchBar);
         // End SearchBar
 
+        const shouldShowSearch = computed(() => {
+           return $store.state.search.trim() !== '';
+        });
+
         return {
             confirmationDialog,
             onConfirmationDialogYes,
@@ -103,6 +109,7 @@ export default defineComponent({
             onConfirmationDialogClose,
 
             searchBar,
+            shouldShowSearch,
         };
     },
 });

@@ -54,6 +54,7 @@
             </div>
         </div>
         <div class="flex flex-col flex-grow">
+            <Breadcumb :task="task" :key="task?.id ?? 'x'" />
             <div class="flex gap-2 text-lg items-center text-gray-800">
                 <div class="">
                     <div
@@ -143,10 +144,11 @@ import { useRouter } from 'vue-router';
 import moment from 'moment';
 import TaskTitle from '@/components/TaskTitle';
 import contenteditable from 'vue-contenteditable';
+import Breadcumb from '@/components/Breadcumb';
 
 export default defineComponent({
     name: 'Task',
-    components: { TaskTitle, contenteditable },
+    components: { TaskTitle, contenteditable, Breadcumb },
     props: {
         parentTask: Object,
         task: Object,

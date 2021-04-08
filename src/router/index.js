@@ -1,5 +1,5 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import Home from '../views/Home.vue'
+import { createRouter, createWebHashHistory } from 'vue-router';
+import Home from '../views/Home.vue';
 
 const routes = [
     {
@@ -11,7 +11,7 @@ const routes = [
         path: '/:id',
         name: 'Subtasks',
         component: Home
-    }
+    },
 ]
 
 const router = createRouter({

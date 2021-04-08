@@ -7,10 +7,7 @@
         </div>
         <div class="flex-grow flex">
             <input
-                v-model="search"
-                ref="searchInput"
-                class="bg-transparent flex-grow outline-none focus:outline-none"
-                placeholder="Search"
+                v-model="search" ref="searchInput" class="bg-transparent flex-grow outline-none focus:outline-none" placeholder="Search"
             />
         </div>
         <div class="flex flex-col justify-center" v-if="noMatches">
@@ -25,16 +22,29 @@
 </template>
 
 <script>
-import { defineComponent, ref } from 'vue';
+import { defineComponent, ref, watch, computed } from 'vue';
+import { useStore } from 'vuex';
 
 export default defineComponent({
     name: 'SearchBar',
     setup() {
-        const isOpen = ref(false);
+        const $store = useStore();
 
-        const search = ref('');
+        const isOpen = ref($store.state.search.trim() !== '');
+
+        const search = ref($store.state.search);
         const searchInput = ref();
-        const noMatches = ref(false);
+        const noMatches = computed(() => {
+            if (search.value.trim() === '') {
+                return false;
+            }
+
+            if (!$store.getters.searchResults.length) {
+                return true;
+            }
+
+            return false;
+        });
 
         function onClickSearchIcon() {
             searchInput.value.focus();
@@ -45,8 +55,15 @@ export default defineComponent({
 
             if (isOpen.value) {
                 setTimeout(onClickSearchIcon, 300);
+            } else {
+                search.value = '';
             }
         }
+
+        watch(search,
+            () => {
+                $store.dispatch('saveSearch', search.value);
+            });
 
         return {
             isOpen,

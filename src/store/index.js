@@ -1,6 +1,7 @@
 import { createStore } from 'vuex';
 import VuexPersistence from 'vuex-persist';
 import moment from 'moment';
+import Fuse from 'fuse.js';
 
 const vuexLocal = new VuexPersistence({
     storage: window.localStorage,
@@ -13,6 +14,7 @@ export default createStore({
         archivedTasks: [],
         tasks: {},
         openTagsCount: 0,
+        search: '',
     },
     mutations: {
         resetOpenTagsCount(state) {
@@ -22,6 +24,7 @@ export default createStore({
           state.openTagsCount += count;
         },
         add(state, task) {
+            task.archived = false;
             task.keyId = moment().unix();
             state.tasks[task.id] = task;
 
@@ -84,6 +87,8 @@ export default createStore({
                 tasks = state.tasks[task.parentId].subtasks;
             }
 
+            task.archived = true;
+
             archivedTasks.push(task.id);
             tasks.splice(tasks.indexOf(task.id), 1);
         },
@@ -117,9 +122,15 @@ export default createStore({
             }
 
             tasks.splice(tasks.indexOf(task.id), 1);
-        }
+        },
+        search(state, search) {
+            state.search = search;
+        },
     },
     actions: {
+        saveSearch({ commit }, search) {
+            commit('search', search);
+        },
         addTask({ commit }, task) {
             commit('add', task);
         },
@@ -270,6 +281,71 @@ export default createStore({
             return state.tasks[task.id].subtasks.reduce((total, subtaskId) => {
                 return total + (state.tasks[subtaskId].isDone ? 1 : 0);
             }, 0);
+        },
+        searchResults: (state) => {
+            console.log(`Search results for search "${state.search}"`)
+            if (state.search.trim() === '') {
+                return [];
+            }
+
+            let processedSearch = ` ${state.search}`;
+            let regex = /\s([#][\w_-]+)/g;
+            let match = null;
+            const tags = []
+            while ((match = regex.exec(processedSearch)) !== null) {
+                console.log(match);
+                const tag = match[0].trim();
+                tags.push(tag.slice(-(tag.length - 1)));
+            }
+
+            processedSearch = processedSearch.replaceAll(regex, '').trim();
+
+            const filteredTasks = Object.values(state.tasks).filter((task) => {
+                if (task.archived) {
+                    return false;
+                }
+
+                if (!tags.length) {
+                    return true;
+                }
+
+                let foundTags = 0;
+                for(const tagToSearch of tags) {
+                    let found = false;
+                    for(const tag of task.tags ?? []) {
+                        if (tagToSearch.toLowerCase() === tag.toLowerCase()) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        foundTags += 1;
+                    } else {
+                        break;
+                    }
+                }
+
+
+                return foundTags === tags.length;
+            });
+
+            if (processedSearch === '') {
+                return filteredTasks;
+            }
+
+            const searchResults = new Fuse(filteredTasks, {
+                includeMatches: true,
+                // minMatchCharLength: 3,
+                threshold: 0.2,
+                keys: ['title']
+            });
+            console.log('Searching for : ', processedSearch);
+            console.log('Tags: ', tags)
+            console.log('Original Search: ', state.search);
+            console.log(searchResults.search(processedSearch));
+            return searchResults.search(processedSearch).map((result) => {
+                return result.item;
+            });
         },
     },
     plugins: [vuexLocal.plugin],

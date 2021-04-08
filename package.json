@@ -16,6 +16,7 @@
     "@tailwindcss/postcss7-compat": "^2.0.2",
     "autoprefixer": "^9",
     "core-js": "^3.6.5",
+    "fuse.js": "^6.4.6",
     "maska": "^1.4.1",
     "mitt": "^2.1.0",
     "moment": "^2.29.1",
