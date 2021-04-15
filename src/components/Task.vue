@@ -110,6 +110,7 @@
                         :noNL="true"
                         :noHTML="true"
                         v-model="tags[i]"
+                        :ref="(el) => setTagInput(el, i)"
                         spellcheck="false"
                         @blur="validateTag(i)"
                         @keyup.esc="(e) => onTagWantsToLeave(i, e)"
@@ -167,6 +168,7 @@ export default defineComponent({
         const tagsOpen = ref(false);
 
         const tags = ref(props.task.tags ? props.task.tags : []);
+        const tagsInput = ref([]);
 
         const inputDate = ref();
 
@@ -313,9 +315,26 @@ export default defineComponent({
             });
         }
 
+        let shouldFocusNextTag = false;
         function onClickAddTag() {
-            tags.value.push('Well');
             saveTags();
+            shouldFocusNextTag = true;
+            tags.value.push('');
+        }
+
+        function setTagInput(el, i) {
+            tagsInput.value[i] = el;
+
+            if (shouldFocusNextTag && i === tags.value.length - 1) {
+                let interval = null;
+                interval = setInterval(() => {
+                    if (el.element) {
+                        el.element.focus();
+                        shouldFocusNextTag = false;
+                        clearInterval(interval);
+                    }
+                }, 200)
+            }
         }
 
         function validateTag(iTag) {
@@ -388,6 +407,7 @@ export default defineComponent({
             validateTag,
             onClickRemove,
             removeDialogIsOpen,
+            setTagInput,
         };
     },
 })
