@@ -1,17 +1,17 @@
 <template>
     <template v-if="removeDialogIsOpen">
-        <teleport to="#confirmation-title">Do you really want to remove this task? <span v-if="task.subtasks.length">It has {{ task.subtasks.length }} subtask{{ task.subtasks.length > 1 ? 's' : ''}}.</span></teleport>
+        <teleport to="#confirmation-title">Do you really want to remove this task?
+            <span v-if="task.subtasks.length">It has {{
+                    task.subtasks.length
+                }} subtask{{ task.subtasks.length > 1 ? 's' : '' }}.</span></teleport>
         <teleport to="#confirmation-yes-button">Yes, remove</teleport>
         <teleport to="#confirmation-no-button">No, cancel</teleport>
     </template>
     <div
-        class="relative bg-white mb-4 p-2 rounded shadow-sm cursor-pointer hover:shadow-md transform transition duration-500 flex"
-        @mouseenter="onMouseEnter"
-        @mouseleave="onMouseLeave"
+        class="relative bg-white mb-4 p-2 rounded shadow-sm cursor-pointer hover:shadow-md transform transition duration-500 flex" @mouseenter="onMouseEnter" @mouseleave="onMouseLeave"
     >
         <div
-            class="absolute -top-3 h-6 left-0 w-full pointer-events-none flex items-center justify-center"
-            v-if="isMouseHover"
+            class="absolute -top-3 h-6 left-0 w-full pointer-events-none flex items-center justify-center" v-if="isMouseHover"
         >
             <div
                 class="pointer-events-auto bg-white shadow-md rounded py-1 px-1 flex items-center text-sm text-gray-500 gap-1"
@@ -58,23 +58,20 @@
             <div class="flex gap-2 text-lg items-center text-gray-800">
                 <div class="">
                     <div
-                        class="border-2 w-5 h-5 text-md flex items-center"
-                        @click="onClick"
+                        class="border-2 w-5 h-5 text-md flex items-center" @click="onClick"
                     >
                         <div v-if="task.isDone" class="w-full text-center">&times;</div>
                     </div>
                 </div>
-                <TaskTitle :task="task" class=""/>
+                <TaskTitle :task="task" class="" />
             </div>
             <div class="text-sm text-gray-500 flex gap-4">
                 <div class="flex flex-row justify-center items-center" @click="onClickDateArea">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" width="18" height="18" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="{2}" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <input
-                        class="ml-2 focus:outline-none block"
-                        :style="`width: ${dateSize}px`"
-                        :class="{
+                        class="ml-2 focus:outline-none block" :style="`width: ${dateSize}px`" :class="{
                             'rounded': dueDateIsInvalid,
                             'px-1': dueDateIsInvalid || dueDateIsDue || dueDateIsToday,
                             'border': dueDateIsInvalid,
@@ -82,17 +79,20 @@
                             'text-white': dueDateIsToday || dueDateIsDue,
                             'bg-yellow-500': dueDateIsToday && !dueDateIsDue,
                             'bg-red-500': dueDateIsDue,
-                        }"
-                        v-maska="['####-##-##', '####-##-## ##:##']"
-                        v-model="dueDate"
-                        ref="inputDate"
+                        }" v-maska="['####-##-##', '####-##-## ##:##']" v-model="dueDate" ref="inputDate"
                     />
                     <span v-if="!task.dueDate" class="absolute left-0 ml-10 text-gray-300 pointer-events-none">YYYY-MM-DD</span>
                 </div>
                 <div class="text-gray-300">|</div>
-                <div class="hover:underline text-gray-500" @click="toggleTags">#<span v-if="isMouseHover">tags</span><span class="text-xs" v-if="tags.length">({{ tags.length }})</span></div>
+                <div class="hover:underline text-gray-500" @click="toggleTags">
+                    #<span v-if="isMouseHover">tags</span><span class="text-xs" v-if="tags.length">({{
+                        tags.length
+                    }})</span></div>
                 <div class="text-gray-300">|</div>
-                <div class="hover:underline cursor-pointer" @click="openSubtasks">{{ subtasksDone }}/{{ task.subtasks.length }} subtarefas</div>
+                <div class="hover:underline cursor-pointer" @click="openSubtasks">{{
+                        subtasksDone
+                    }}/{{ task.subtasks.length }} subtarefas
+                </div>
             </div>
             <div class="text-sm text-gray-500 flex flex-wrap gap-2 mt-2" v-if="tagsOpen">
                 <div class="hover:underline" @click="onClickAddTag">+ Add tag</div>
@@ -101,10 +101,16 @@
                 <div
                     v-for="(tag, i) of tags" :key="`tags-${i}`"
                     class="bg-gray-500 text-white px-1 rounded"
+                    @mouseenter="(e) => onMouseEnterTag(e, i)"
+                    @mouseover="(e) => onMouseEnterTag(e, i)"
+                    @mousemove="(e) => onMouseEnterTag(e, i)"
+                    @mouseleave="(e) => onMouseLeaveTag(e, i)"
+                    @click="(e) => onClickTag(e, i)"
                 >
                     <span>#</span>
                     <contenteditable
                         class="focus:outline-none"
+                        :class="{ 'underline': tagsUnderline[i] === true }"
                         tag="span"
                         :contenteditable="true"
                         :noNL="true"
@@ -117,29 +123,37 @@
                         @keyup.enter="(e) => onTagWantsToLeave(i, e)"
                     />
                 </div>
-<!--                <div><span>#</span><contenteditable class="focus:outline-none" tag="span" :contenteditable="true" :noNL="true" :noHTML="true" v-model="tag" spellcheck="false"  /></div>-->
-<!--                <div>#{{ tag }}</div>-->
-<!--                <div>#woodstack</div>-->
-<!--                <div>#jcp270</div>-->
-<!--                <div>#iantina</div>-->
-<!--                <div>#woodstack</div>-->
-<!--                <div>#jcp270</div>-->
-<!--                <div>#iantina</div>-->
-<!--                <div>#woodstack</div>-->
-<!--                <div class="hover:underline">+ Add tag</div>-->
+                <!--                <div><span>#</span><contenteditable class="focus:outline-none" tag="span" :contenteditable="true" :noNL="true" :noHTML="true" v-model="tag" spellcheck="false"  /></div>-->
+                <!--                <div>#{{ tag }}</div>-->
+                <!--                <div>#woodstack</div>-->
+                <!--                <div>#jcp270</div>-->
+                <!--                <div>#iantina</div>-->
+                <!--                <div>#woodstack</div>-->
+                <!--                <div>#jcp270</div>-->
+                <!--                <div>#iantina</div>-->
+                <!--                <div>#woodstack</div>-->
+                <!--                <div class="hover:underline">+ Add tag</div>-->
             </div>
         </div>
         <div class="w-10" />
         <div
-            class="flex items-center w-10 cursor-pointer text-gray-600 absolute right-0 top-0 h-full"
-            @click="openSubtasks">
+            class="flex items-center w-10 cursor-pointer text-gray-600 absolute right-0 top-0 h-full" @click="openSubtasks"
+        >
             <div class="text-right w-full mr-2">&gt;</div>
         </div>
     </div>
 </template>
 
 <script>
-import { defineComponent, computed, ref, watch, getCurrentInstance, onMounted, onUnmounted } from 'vue';
+import {
+    computed,
+    defineComponent,
+    getCurrentInstance,
+    onMounted,
+    onUnmounted,
+    ref,
+    watch,
+} from 'vue';
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import moment from 'moment';
@@ -169,6 +183,7 @@ export default defineComponent({
 
         const tags = ref(props.task.tags ? props.task.tags : []);
         const tagsInput = ref([]);
+        const tagsUnderline = ref([]);
 
         const inputDate = ref();
 
@@ -316,6 +331,7 @@ export default defineComponent({
         }
 
         let shouldFocusNextTag = false;
+
         function onClickAddTag() {
             saveTags();
             shouldFocusNextTag = true;
@@ -333,8 +349,47 @@ export default defineComponent({
                         shouldFocusNextTag = false;
                         clearInterval(interval);
                     }
-                }, 200)
+                }, 200);
             }
+        }
+
+        function isMeta(e) {
+            if (window.navigator.platform.toLowerCase().indexOf('mac') !== -1) {
+                if (e.metaKey) {
+                    return true;
+                }
+                return false;
+            }
+
+
+            if (e.ctrlKey) {
+                return true;
+            }
+
+            return false;
+        }
+
+        function onClickTag(e, iTag) {
+            let shouldSearch = isMeta(e);
+
+
+            if (!shouldSearch) {
+                return;
+            }
+
+            e.preventDefault();
+
+            if (tags.value[iTag].trim()) {
+                $emitter.emit('search', `#${tags.value[iTag].trim()}`);
+            }
+        }
+
+        function onMouseEnterTag(e, iTag) {
+            tagsUnderline.value[iTag] = isMeta(e);
+        }
+
+        function onMouseLeaveTag(e, iTag) {
+            tagsUnderline.value[iTag] = false;
         }
 
         function validateTag(iTag) {
@@ -408,7 +463,11 @@ export default defineComponent({
             onClickRemove,
             removeDialogIsOpen,
             setTagInput,
+            onClickTag,
+            onMouseEnterTag,
+            onMouseLeaveTag,
+            tagsUnderline
         };
     },
-})
+});
 </script>

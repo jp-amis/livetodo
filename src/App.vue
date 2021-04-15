@@ -95,7 +95,12 @@ export default defineComponent({
             searchBar.value.toggle();
         }
 
+        function search(terms) {
+            searchBar.value.doSearch(terms);
+        }
+
         $emitter.on('toggle-search-bar', toggleSearchBar);
+        $emitter.on('search', search);
         // End SearchBar
 
         const shouldShowSearch = computed(() => {

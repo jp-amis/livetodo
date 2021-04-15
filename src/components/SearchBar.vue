@@ -60,6 +60,14 @@ export default defineComponent({
             }
         }
 
+        function doSearch(terms) {
+            search.value = terms;
+
+            if (search.value.trim() !== '') {
+                isOpen.value = true;
+            }
+        }
+
         watch(search,
             () => {
                 $store.dispatch('saveSearch', search.value);
@@ -72,6 +80,7 @@ export default defineComponent({
             noMatches,
             onClickSearchIcon,
             toggle,
+            doSearch,
         };
     },
 });
