@@ -7,7 +7,11 @@
         </div>
         <div class="flex-grow flex">
             <input
-                v-model="search" ref="searchInput" class="bg-transparent flex-grow outline-none focus:outline-none" placeholder="Search"
+                v-model="search"
+                ref="searchInput"
+                class="bg-transparent flex-grow outline-none focus:outline-none"
+                placeholder="Search"
+                @keydown.esc="onEsc"
             />
         </div>
         <div class="flex flex-col justify-center" v-if="noMatches">
@@ -32,6 +36,8 @@ export default defineComponent({
 
         const isOpen = ref($store.state.search.trim() !== '');
 
+        let isEscBlocked = false;
+
         const search = ref($store.state.search);
         const searchInput = ref();
         const noMatches = computed(() => {
@@ -54,9 +60,16 @@ export default defineComponent({
             isOpen.value = !isOpen.value;
 
             if (isOpen.value) {
+                isEscBlocked = false;
                 setTimeout(onClickSearchIcon, 300);
             } else {
                 search.value = '';
+            }
+        }
+
+        function open() {
+            if (!isOpen.value) {
+                toggle();
             }
         }
 
@@ -73,6 +86,23 @@ export default defineComponent({
                 $store.dispatch('saveSearch', search.value);
             });
 
+        function onEsc() {
+            if (isEscBlocked) {
+                return;
+            }
+            if (search.value === '') {
+                toggle();
+                return;
+            }
+
+            search.value = '';
+
+            isEscBlocked = true;
+            setTimeout(() => {
+                isEscBlocked = false;
+            }, 500);
+        }
+
         return {
             isOpen,
             search,
@@ -81,6 +111,8 @@ export default defineComponent({
             onClickSearchIcon,
             toggle,
             doSearch,
+            open,
+            onEsc,
         };
     },
 });

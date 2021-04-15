@@ -1,4 +1,7 @@
 <template>
+    <GlobalEvents
+        @keydown.meta.shift.f="onSearchShortcut"
+    />
     <SearchBar ref="searchBar" />
     <ConfirmationPopup
         ref="confirmationDialog"
@@ -19,10 +22,11 @@ import moment from 'moment';
 import ConfirmationPopup from '@/components/ConfirmationPopup';
 import SearchBar from '@/components/SearchBar';
 import SearchResults from '@/views/SearchResults';
+import { GlobalEvents } from 'vue-global-events';
 
 export default defineComponent({
     name: 'App',
-    components: { SearchResults, SearchBar, ConfirmationPopup },
+    components: { GlobalEvents, SearchResults, SearchBar, ConfirmationPopup },
     setup() {
         const $internalInstance = getCurrentInstance();
         const $emitter = $internalInstance.appContext.config.globalProperties.emitter;
@@ -107,11 +111,19 @@ export default defineComponent({
            return $store.state.search.trim() !== '';
         });
 
+        function onSearchShortcut(e) {
+            e.preventDefault();
+            if (!$store.getters.isSearching) {
+                searchBar.value.open();
+            }
+        }
+
         return {
             confirmationDialog,
             onConfirmationDialogYes,
             onConfirmationDialogNo,
             onConfirmationDialogClose,
+            onSearchShortcut,
 
             searchBar,
             shouldShowSearch,

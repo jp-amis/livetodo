@@ -54,7 +54,7 @@
             </div>
         </div>
         <div class="flex flex-col flex-grow">
-            <Breadcumb :task="task" :key="task?.id ?? 'x'" />
+            <Breadcumb :task="task" :key="task?.id ?? 'x'" v-if="isSearching" />
             <div class="flex gap-2 text-lg items-center text-gray-800">
                 <div class="">
                     <div
@@ -188,6 +188,8 @@ export default defineComponent({
         const inputDate = ref();
 
         const dueDate = ref(props.task.dueDate);
+
+        const isSearching = computed(() => $store.getters.isSearching );
 
         const dateSize = computed(() => {
             if (dueDate.value.length <= 10) {
@@ -466,7 +468,8 @@ export default defineComponent({
             onClickTag,
             onMouseEnterTag,
             onMouseLeaveTag,
-            tagsUnderline
+            tagsUnderline,
+            isSearching,
         };
     },
 });

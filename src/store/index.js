@@ -347,6 +347,13 @@ export default createStore({
                 return result.item;
             });
         },
+        isSearching: state => {
+            if (state.search.trim()) {
+                return true;
+            }
+
+            return false;
+        },
     },
     plugins: [vuexLocal.plugin],
 });
