@@ -39,6 +39,7 @@ export default createStore({
         toggle(state, task) {
             const foundTask = state.tasks[task.id];
             foundTask.isDone = !foundTask.isDone;
+            foundTask.doneDate = foundTask.isDone ? moment().unix() : null;
         },
         dueDate(state, taskData) {
             const taskFound = state.tasks[taskData.task.id];
