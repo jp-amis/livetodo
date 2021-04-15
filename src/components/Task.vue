@@ -73,12 +73,12 @@
                     <input
                         class="ml-2 focus:outline-none block" :style="`width: ${dateSize}px`" :class="{
                             'rounded': dueDateIsInvalid,
-                            'px-1': dueDateIsInvalid || dueDateIsDue || dueDateIsToday,
+                            'px-1': dueDateIsInvalid || (!task.isDone && (dueDateIsDue || dueDateIsToday)),
                             'border': dueDateIsInvalid,
                             'border-red-400': dueDateIsInvalid,
-                            'text-white': dueDateIsToday || dueDateIsDue,
-                            'bg-yellow-500': dueDateIsToday && !dueDateIsDue,
-                            'bg-red-500': dueDateIsDue,
+                            'text-white': (!task.isDone && (dueDateIsDue || dueDateIsToday)),
+                            'bg-yellow-500': !task.isDone && (dueDateIsToday && !dueDateIsDue),
+                            'bg-red-500': !task.isDone && dueDateIsDue,
                         }" v-maska="['####-##-##', '####-##-## ##:##']" v-model="dueDate" ref="inputDate"
                     />
                     <span v-if="!task.dueDate" class="absolute left-0 ml-10 text-gray-300 pointer-events-none">YYYY-MM-DD</span>
