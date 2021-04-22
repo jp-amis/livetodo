@@ -1,7 +1,9 @@
 <template>
     <GlobalEvents
         @keydown.meta.shift.f="onSearchShortcut"
+        @keydown.meta.s="onSaveShortcut"
     />
+<!--    <Header />-->
     <SearchBar ref="searchBar" />
     <ConfirmationPopup
         ref="confirmationDialog"
@@ -103,8 +105,13 @@ export default defineComponent({
             searchBar.value.doSearch(terms);
         }
 
+        function cleanSearch() {
+            searchBar.value.clean();
+        }
+
         $emitter.on('toggle-search-bar', toggleSearchBar);
         $emitter.on('search', search);
+        $emitter.on('cleanSearch', cleanSearch);
         // End SearchBar
 
         const shouldShowSearch = computed(() => {
@@ -118,6 +125,12 @@ export default defineComponent({
             }
         }
 
+        function onSaveShortcut(e) {
+            // console.log('Should Save');
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
         return {
             confirmationDialog,
             onConfirmationDialogYes,
@@ -127,6 +140,8 @@ export default defineComponent({
 
             searchBar,
             shouldShowSearch,
+
+            onSaveShortcut,
         };
     },
 });

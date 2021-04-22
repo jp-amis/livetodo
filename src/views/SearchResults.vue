@@ -1,7 +1,8 @@
 <template>
     <div>
+        {{ tasks.length }}
         <Task
-            v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :task="task"
+            v-for="task in tasks" :key="task.keyId" :task="task"
         />
     </div>
 </template>

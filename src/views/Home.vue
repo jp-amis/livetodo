@@ -17,7 +17,11 @@
             class="w-full shadow-sm rounded px-2 py-1" placeholder="Enter your task..." @keydown.enter="createTask" v-model="newTask" type="text"
         />
     </div>
-    <VueDraggableNext class="dragArea list-group w-full" :list="tasks" @change="onDragTasks">
+    <VueDraggableNext
+        class="dragArea list-group w-full"
+        :list="tasks"
+        @change="onDragTasks"
+        :key="currentTask ? currentTask.keyId : '-x-'">
         <Task
             v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
         />
@@ -56,9 +60,8 @@ export default defineComponent({
 
         const newTask = ref('');
         const currentTask = ref(null);
-        const tasks = computed(() => {
-            return $store.getters.subtasksOfTask(currentTask.value);
-        });
+        const tasks = computed(() => $store.getters.subtasksOfTask(currentTask.value));
+
         const archivedTasks = computed(() => {
             return $store.getters.archivedTasksOfTask(currentTask.value);
         });
@@ -82,6 +85,10 @@ export default defineComponent({
         );
 
         function createTask() {
+            if (!newTask.value.trim()) {
+                return;
+            }
+
             const taskToAdd = {
                 id: new Date().getTime(),
                 title: newTask.value,
@@ -133,9 +140,3 @@ export default defineComponent({
     },
 });
 </script>
-
-
-{"toCheckTasks":[],"rootTasks":[1614828809692],"tasks":[{"id":1614219967045,"title":"Task 001","isDone":true,"dueDate":20200101,"subtasks":[{"id":1614219972105,"title":"Sub 01","isDone":true,"dueDate":"2020-01-01 12:00","subtasks":[],"parentId":1614219967045},{"id":1614221262634,"title":"Sub 02","isDone":true,"dueDate":"2020-01-01 10:30","subtasks":[],"parentId":1614219967045}]}]}
-
-
-

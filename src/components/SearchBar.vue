@@ -103,6 +103,11 @@ export default defineComponent({
             }, 500);
         }
 
+        function clean() {
+            search.value = '';
+            isOpen.value = false;
+        }
+
         return {
             isOpen,
             search,
@@ -113,6 +118,7 @@ export default defineComponent({
             doSearch,
             open,
             onEsc,
+            clean,
         };
     },
 });

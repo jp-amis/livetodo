@@ -267,6 +267,7 @@ export default defineComponent({
 
         function openSubtasks() {
             $router.push(`/${props.task.id}`);
+            $emitter.emit('cleanSearch');
         }
 
         function onClickDateArea() {

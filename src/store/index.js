@@ -25,7 +25,7 @@ export default createStore({
         },
         add(state, task) {
             task.archived = false;
-            task.keyId = moment().unix();
+            task.keyId = moment().unix() + Math.random();
             state.tasks[task.id] = task;
 
             if (task.parentId === null) {
@@ -284,7 +284,6 @@ export default createStore({
             }, 0);
         },
         searchResults: (state) => {
-            console.log(`Search results for search "${state.search}"`)
             if (state.search.trim() === '') {
                 return [];
             }
@@ -340,10 +339,7 @@ export default createStore({
                 threshold: 0.2,
                 keys: ['title']
             });
-            console.log('Searching for : ', processedSearch);
-            console.log('Tags: ', tags)
-            console.log('Original Search: ', state.search);
-            console.log(searchResults.search(processedSearch));
+            // !raid
             return searchResults.search(processedSearch).map((result) => {
                 return result.item;
             });
