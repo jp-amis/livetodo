@@ -26,7 +26,7 @@
             v-for="task in tasks" :key="task.id + (task.keyId ? task.keyId : 'xxx')" :parentTask="currentTask" :task="task"
         />
     </VueDraggableNext>
-    <div class="flex mb-4">
+    <div class="flex mb-4" v-if="archivedTasks.length">
         <div class="flex-grow flex justify-center items-center">
             <div class="border-b border-gray-300 flex-grow h-1"></div>
         </div>

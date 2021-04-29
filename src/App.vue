@@ -1,7 +1,6 @@
 <template>
     <GlobalEvents
         @keydown.meta.shift.f="onSearchShortcut"
-        @keydown.meta.s="onSaveShortcut"
     />
 <!--    <Header />-->
     <SearchBar ref="searchBar" />
@@ -125,11 +124,19 @@ export default defineComponent({
             }
         }
 
-        function onSaveShortcut(e) {
-            // console.log('Should Save');
-            e.preventDefault();
-            e.stopPropagation();
-        }
+        // function onSaveShortcut(e) {
+        //     e.preventDefault();
+        //     e.stopPropagation();
+        //
+        //     $store.dispatch('file');
+        // }
+
+        // function onOpenShortcut(e) {
+        //     e.preventDefault();
+        //     e.stopPropagation();
+        //
+        //     $store.dispatch('open');
+        // }
 
         return {
             confirmationDialog,
@@ -141,7 +148,8 @@ export default defineComponent({
             searchBar,
             shouldShowSearch,
 
-            onSaveShortcut,
+            // onSaveShortcut,
+            // onOpenShortcut,
         };
     },
 });

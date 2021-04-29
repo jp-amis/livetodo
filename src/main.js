@@ -6,6 +6,7 @@ import './assets/tailwind.css';
 import Maska from 'maska';
 import mitt from 'mitt';
 import contenteditable from 'vue-contenteditable'
+import '@/helpers/file';
 
 const emitter = mitt();
 

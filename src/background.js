@@ -1,8 +1,10 @@
 'use strict';
 
-import { app, BrowserWindow, protocol } from 'electron';
+import { app, BrowserWindow, protocol, ipcMain, dialog } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
+import fs from 'fs';
+const { Menu, MenuItem } = require('electron')
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -11,13 +13,17 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
+let win;
+
 async function createWindow() {
     // Create the browser window.
-    const win = new BrowserWindow({
+    win = new BrowserWindow({
+        title: 'Untitled',
         width: 800,
         height: 600,
+        minWidth: 640,
+        minHeight: 348,
         webPreferences: {
-
             // Use pluginOptions.nodeIntegration, leave this alone
             // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
             nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
@@ -79,3 +85,64 @@ if (isDevelopment) {
         });
     }
 }
+
+
+// Handle file
+const documents = [];
+
+ipcMain.on('save', (event, arg) => {
+    if (!documents.length) {
+        const savedPath = dialog.showSaveDialogSync(win, {
+            title: 'Save as...',
+            defaultPath: 'Default.ltodo',
+            filters: [
+                {
+                    name: 'LiveTodo',
+                    extension: ['ltodo']
+                }
+            ],
+            securityScopedBookmarks: true,
+        });
+
+        if (!savedPath) {
+            return;
+        }
+
+        documents.push(savedPath);
+    }
+
+    win.setTitle(`${documents[0].split('/').pop()}`);
+    fs.writeFileSync(documents[0], arg.data);
+});
+
+function openFile() {
+    const filePath = dialog.showOpenDialogSync(win, {
+        title: 'Open file...',
+        properties: ['openFile', 'createDirectory']
+    });
+
+    if (!filePath) {
+        return;
+    }
+
+    documents.pop();
+    documents.push(filePath.pop());
+    win.setTitle(`${documents[0].split('/').pop()}`);
+    const file = fs.readFileSync(documents[0]);
+    win.webContents.send('open', file.toString());
+}
+
+const menu = new Menu()
+menu.append(new MenuItem({
+    label: 'LiveTodo',
+}));
+menu.append(new MenuItem({
+    label: 'File',
+    submenu: [{
+        label: 'Open...',
+        accelerator: 'CommandOrControl+O',
+        click: openFile,
+    }]
+}))
+
+Menu.setApplicationMenu(menu)

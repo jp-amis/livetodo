@@ -1,11 +1,13 @@
 import { createStore } from 'vuex';
-import VuexPersistence from 'vuex-persist';
+// import VuexPersistence from 'vuex-persist';
 import moment from 'moment';
 import Fuse from 'fuse.js';
+import { serialize } from '@/helpers/serialize';
+// import { save } from '@/helpers/file';
 
-const vuexLocal = new VuexPersistence({
-    storage: window.localStorage,
-});
+// const vuexLocal = new VuexPersistence({
+//     storage: window.localStorage,
+// });
 
 export default createStore({
     state: {
@@ -229,6 +231,9 @@ export default createStore({
         removeTask({ commit }, task) {
             commit('remove', task);
         },
+        // save({ getters }) {
+        //     save(getters.serialize);
+        // },
     },
     getters: {
         getValidDate: () => (date) => {
@@ -351,6 +356,9 @@ export default createStore({
 
             return false;
         },
+        serialize: state => {
+            return serialize(state);
+        },
     },
-    plugins: [vuexLocal.plugin],
+    // plugins: [vuexLocal.plugin],
 });
