@@ -234,6 +234,28 @@ export default createStore({
         // save({ getters }) {
         //     save(getters.serialize);
         // },
+        open({ commit }, tasks) {
+            const processTask = (task, parentId) => {
+                const taskToAdd = {
+                    id: new Date().getTime() + Math.random(),
+                    title: task.title,
+                    isDone: false,
+                    dueDate: '',
+                    parentId,
+                    subtasks: [],
+                    tags: [],
+                };
+                commit('add', taskToAdd);
+                if (task.subtasks) {
+                    for (const subtask of task.subtasks) {
+                        processTask(subtask, taskToAdd.id);
+                    }
+                }
+            };
+            for (const task of tasks) {
+                processTask(task, null);
+            }
+        }
     },
     getters: {
         getValidDate: () => (date) => {

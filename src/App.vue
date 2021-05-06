@@ -24,6 +24,7 @@ import ConfirmationPopup from '@/components/ConfirmationPopup';
 import SearchBar from '@/components/SearchBar';
 import SearchResults from '@/views/SearchResults';
 import { GlobalEvents } from 'vue-global-events';
+import { setDelegateOpen } from './helpers/file';
 
 export default defineComponent({
     name: 'App',
@@ -137,6 +138,14 @@ export default defineComponent({
         //
         //     $store.dispatch('open');
         // }
+
+
+        function handleOpen(tasks) {
+            console.log('Delegate');
+            console.log(tasks);
+            $store.dispatch('open', tasks);
+        }
+        setDelegateOpen(handleOpen);
 
         return {
             confirmationDialog,

@@ -1,13 +1,20 @@
 const { ipcRenderer } = require('electron');
 
-function file(serialized) {
-    ipcRenderer.send('save', {
-        data: serialized,
-    });
-}
+// function file(serialized) {
+//     ipcRenderer.send('save', {
+//         data: serialized,
+//     });
+// }
+//
+// module.exports.save = file;
+let _delegateOpen = null;
 
-module.exports.save = file;
+module.exports.setDelegateOpen = (delegateOpen) => {
+  _delegateOpen = delegateOpen;
+};
 
 ipcRenderer.on('open', (event, arg) => {
-    console.log(arg);
+    if (_delegateOpen != null) {
+        _delegateOpen(arg);
+    }
 });

@@ -4,6 +4,7 @@ import { app, BrowserWindow, protocol, ipcMain, dialog } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import fs from 'fs';
+const { Parser } = require('./helpers/parse');
 const { Menu, MenuItem } = require('electron')
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -129,7 +130,8 @@ function openFile() {
     documents.push(filePath.pop());
     win.setTitle(`${documents[0].split('/').pop()}`);
     const file = fs.readFileSync(documents[0]);
-    win.webContents.send('open', file.toString());
+    const parser = new Parser(file.toString());
+    win.webContents.send('open', parser.parse());
 }
 
 const menu = new Menu()
