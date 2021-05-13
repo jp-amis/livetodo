@@ -239,11 +239,11 @@ export default createStore({
                 const taskToAdd = {
                     id: new Date().getTime() + Math.random(),
                     title: task.title,
-                    isDone: false,
-                    dueDate: '',
+                    isDone: task.isDone,
+                    dueDate: task.due,
                     parentId,
                     subtasks: [],
-                    tags: [],
+                    tags: task.tags,
                 };
                 commit('add', taskToAdd);
                 if (task.subtasks) {

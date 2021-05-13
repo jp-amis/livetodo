@@ -4,6 +4,7 @@ import { app, BrowserWindow, protocol, ipcMain, dialog } from 'electron';
 import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
 import fs from 'fs';
+import path from 'path';
 const { Parser } = require('./helpers/parse');
 const { Menu, MenuItem } = require('electron')
 
@@ -14,22 +15,27 @@ protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
 
-let win;
+const windows = {};
 
 async function createWindow() {
     // Create the browser window.
-    win = new BrowserWindow({
-        title: 'Untitled',
+    const win = new BrowserWindow({
         width: 800,
         height: 600,
         minWidth: 640,
         minHeight: 348,
+        show: true,
         webPreferences: {
             // Use pluginOptions.nodeIntegration, leave this alone
             // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-            nodeIntegration: process.env.ELECTRON_NODE_INTEGRATION,
+            nodeIntegration: true,
+            preload: path.join(__static, 'preload.js'),
         },
     });
+
+    windows[win.id] = {
+        window: win,
+    };
 
     if (process.env.WEBPACK_DEV_SERVER_URL) {
         // Load the url of the dev server if in development mode
@@ -99,8 +105,8 @@ ipcMain.on('save', (event, arg) => {
             filters: [
                 {
                     name: 'LiveTodo',
-                    extension: ['ltodo']
-                }
+                    extension: ['ltodo'],
+                },
             ],
             securityScopedBookmarks: true,
         });
@@ -134,7 +140,7 @@ function openFile() {
     win.webContents.send('open', parser.parse());
 }
 
-const menu = new Menu()
+const menu = new Menu();
 menu.append(new MenuItem({
     label: 'LiveTodo',
 }));

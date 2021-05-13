@@ -3,6 +3,15 @@ const RegEx = {
     task: (spaces) => {
         return new RegExp(`^[\\s]{${spaces * 4}}\\[[x ]][\\s]`);
     },
+    taskIsDone: (spaces) => {
+        return new RegExp(`^[\\s]{${spaces * 4}}\\[[x]][\\s]`);
+    },
+    due: (spaces) => {
+        return new RegExp(`^[\\s]{${spaces * 4}}@due\\(.*\\)`);
+    },
+    tags: (spaces) => {
+        return new RegExp(`^[\\s]{${spaces * 4}}#`);
+    },
 };
 
 // Task
@@ -37,27 +46,43 @@ Parser.prototype.parseLine = function(line) {
 
     let lineParsed = line;
 
+    let isNotATask = false;
+
     if (this.subtaskCounter !== 0) {
-        while(!line.match(RegEx.task(this.subtaskCounter)) && this.subtaskCounter > 0) {
-            this.subtaskCounter -= 1;
+        if (line.match(RegEx.tags(this.subtaskCounter))) {
+            isNotATask = true;
+
+            this.lastParsed[this.subtaskCounter - 1].tags = line.trim().split(' ').map((tag) => {
+                return tag.substr(1, tag.length);
+            });
+        } else if (line.match(RegEx.due(this.subtaskCounter))) {
+            isNotATask = true;
+
+            const due = line.split('@due(')[1];
+            this.lastParsed[this.subtaskCounter - 1].due = due.substr(0, due.length - 1);
         }
-    //     // Is a Task
-    //     if (line.match(RegEx.subdata(this.subtaskCounter))) {
-    //
-    //     } else {
-    //         this.subtaskCounter -= 1;
-    //         // console.log(`There is an error on line ${this.lineNumber}`);
-    //     }
-    //
-    //     // TODO: Is a configuration
+
+        if (!isNotATask) {
+            while (!line.match(RegEx.task(this.subtaskCounter)) && this.subtaskCounter > 0) {
+                this.subtaskCounter -= 1;
+            }
+        }
     }
 
     if (lineParsed.match(RegEx.task(this.subtaskCounter))) {
         const taskSplited = lineParsed.split(RegEx.task(this.subtaskCounter));
 
+        let isDone = false;
+        if (lineParsed.match(RegEx.taskIsDone(this.subtaskCounter))) {
+            isDone = true;
+        }
+
         const task = {
             title: taskSplited.pop(),
             text: lineParsed,
+            isDone: isDone,
+            tags: [],
+            due: '',
         };
 
         if (this.subtaskCounter === 0) {
