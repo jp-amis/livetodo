@@ -3,6 +3,7 @@ import { createStore } from 'vuex';
 import moment from 'moment';
 import Fuse from 'fuse.js';
 import { serialize } from '@/helpers/serialize';
+import { fileChanged } from '@/electron/renderer/file';
 // import { save } from '@/helpers/file';
 
 // const vuexLocal = new VuexPersistence({
@@ -11,6 +12,7 @@ import { serialize } from '@/helpers/serialize';
 
 export default createStore({
     state: {
+        winId: -1,
         toCheckTasks: [],
         rootTasks: [],
         archivedTasks: [],
@@ -129,13 +131,18 @@ export default createStore({
         search(state, search) {
             state.search = search;
         },
+        winId(state, winId) {
+            state.winId = winId;
+        },
     },
     actions: {
         saveSearch({ commit }, search) {
             commit('search', search);
         },
-        addTask({ commit }, task) {
+        addTask({ commit, state, getters }, task) {
             commit('add', task);
+
+            fileChanged(state.winId, getters.serialize);
         },
         handleParentTaskCompletion({ dispatch, state, getters }, task) {
             if (task.parentId == null) {
@@ -151,12 +158,16 @@ export default createStore({
             if (parentTask.subtasks.length == getters.countDoneSubtasks(parentTask)) {
                 dispatch('toggleTask', parentTask);
             }
+
+            fileChanged(state.winId, getters.serialize);
         },
-        toggleTask({ commit, dispatch }, task) {
+        toggleTask({ commit, dispatch, state, getters }, task) {
             commit('toggle', task);
             dispatch('handleParentTaskCompletion', task);
+
+            fileChanged(state.winId, getters.serialize);
         },
-        addTaskToCheck({ commit }, task) {
+        addTaskToCheck({ commit, state, getters }, task) {
             const date = moment(task.dueDate, 'YYYY-MM-DD HH:mm', true);
             if (date.isValid()) {
                 if (date.diff(moment(), 'seconds') > 0) {
@@ -166,19 +177,25 @@ export default createStore({
             }
 
             commit('removeTaskFromCheck', task.id);
+
+            fileChanged(state.winId, getters.serialize);
         },
-        updateTaskToCheck({ commit }, task) {
+        updateTaskToCheck({ commit, state, getters }, task) {
             commit('removeTaskFromCheck', task.id);
+            fileChanged(state.winId, getters.serialize);
         },
-        changeDueDate({ commit, dispatch }, taskData) {
+        changeDueDate({ commit, dispatch, state, getters }, taskData) {
             commit('dueDate', taskData);
             dispatch('addTaskToCheck', taskData.task);
+            fileChanged(state.winId, getters.serialize);
         },
-        changeTags({ commit }, taskData) {
+        changeTags({ commit, state, getters }, taskData) {
             commit('changeTags', taskData);
+            fileChanged(state.winId, getters.serialize);
         },
-        changeTitle({ commit }, taskData) {
+        changeTitle({ commit, state, getters }, taskData) {
             commit('title', taskData);
+            fileChanged(state.winId, getters.serialize);
         },
         archive({ state, getters, commit }, archiveData) {
             const task = archiveData.task;
@@ -199,11 +216,14 @@ export default createStore({
                     }
                 }
             }
+
+            fileChanged(state.winId, getters.serialize);
         },
-        swapTask({ commit }, { task, newIndex, oldIndex }) {
+        swapTask({ commit, state, getters }, { task, newIndex, oldIndex }) {
             commit('swapTask', { task, newIndex, oldIndex });
+            fileChanged(state.winId, getters.serialize);
         },
-        moveTask({ state, commit }, { task, direction }) {
+        moveTask({ commit, state, getters }, { task, direction }) {
             let tasks = state.rootTasks;
             if (task.parentId !== null) {
                 tasks = state.tasks[task.parentId].subtasks;
@@ -227,34 +247,39 @@ export default createStore({
             }
 
             commit('swapTask', { task, oldIndex, newIndex });
+
+            fileChanged(state.winId, getters.serialize);
         },
-        removeTask({ commit }, task) {
+        removeTask({ commit, state, getters }, task) {
             commit('remove', task);
+            fileChanged(state.winId, getters.serialize);
         },
         // save({ getters }) {
         //     save(getters.serialize);
         // },
-        open({ commit }, tasks) {
-            const processTask = (task, parentId) => {
-                const taskToAdd = {
-                    id: new Date().getTime() + Math.random(),
-                    title: task.title,
-                    isDone: task.isDone,
-                    dueDate: task.due,
-                    parentId,
-                    subtasks: [],
-                    tags: task.tags,
-                };
-                commit('add', taskToAdd);
-                if (task.subtasks) {
-                    for (const subtask of task.subtasks) {
-                        processTask(subtask, taskToAdd.id);
-                    }
-                }
-            };
-            for (const task of tasks) {
-                processTask(task, null);
-            }
+        open({ commit, state, getters }, args) {
+            commit('winId', args.winId);
+            // const processTask = (task, parentId) => {
+            //     const taskToAdd = {
+            //         id: new Date().getTime() + Math.random(),
+            //         title: task.title,
+            //         isDone: task.isDone,
+            //         dueDate: task.due,
+            //         parentId,
+            //         subtasks: [],
+            //         tags: task.tags,
+            //     };
+            //     commit('add', taskToAdd);
+            //     if (task.subtasks) {
+            //         for (const subtask of task.subtasks) {
+            //             processTask(subtask, taskToAdd.id);
+            //         }
+            //     }
+            // };
+            // for (const task of tasks) {
+            //     processTask(task, null);
+            // }
+            fileChanged(state.winId, getters.serialize);
         }
     },
     getters: {

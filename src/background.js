@@ -1,12 +1,15 @@
 'use strict';
 
-import { app, BrowserWindow, protocol, ipcMain, dialog } from 'electron';
-import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
+import { app, BrowserWindow, protocol } from 'electron';
+// import { createProtocol } from 'vue-cli-plugin-electron-builder/lib';
 import installExtension, { VUEJS_DEVTOOLS } from 'electron-devtools-installer';
-import fs from 'fs';
-import path from 'path';
-const { Parser } = require('./helpers/parse');
-const { Menu, MenuItem } = require('electron')
+// import fs from 'fs';
+// import path from 'path';
+// import { createWindow } from './electron/main/window';
+import { showInitialDialog } from './electron/main/file';
+import { initMenu } from './electron/main/menu';
+// const { Parser } = require('./helpers/parse');
+// const { Menu, MenuItem } = require('electron')
 
 const isDevelopment = process.env.NODE_ENV !== 'production';
 
@@ -14,39 +17,6 @@ const isDevelopment = process.env.NODE_ENV !== 'production';
 protocol.registerSchemesAsPrivileged([
     { scheme: 'app', privileges: { secure: true, standard: true } },
 ]);
-
-const windows = {};
-
-async function createWindow() {
-    // Create the browser window.
-    const win = new BrowserWindow({
-        width: 800,
-        height: 600,
-        minWidth: 640,
-        minHeight: 348,
-        show: true,
-        webPreferences: {
-            // Use pluginOptions.nodeIntegration, leave this alone
-            // See nklayman.github.io/vue-cli-plugin-electron-builder/guide/security.html#node-integration for more info
-            nodeIntegration: true,
-            preload: path.join(__static, 'preload.js'),
-        },
-    });
-
-    windows[win.id] = {
-        window: win,
-    };
-
-    if (process.env.WEBPACK_DEV_SERVER_URL) {
-        // Load the url of the dev server if in development mode
-        await win.loadURL(process.env.WEBPACK_DEV_SERVER_URL);
-        if (!process.env.IS_TEST) win.webContents.openDevTools();
-    } else {
-        createProtocol('app');
-        // Load the index.html when not in development
-        win.loadURL('app://./index.html');
-    }
-}
 
 // Quit when all windows are closed.
 app.on('window-all-closed', () => {
@@ -60,7 +30,9 @@ app.on('window-all-closed', () => {
 app.on('activate', () => {
     // On macOS it's common to re-create a window in the app when the
     // dock icon is clicked and there are no other windows open.
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+        showInitialDialog();
+    }
 });
 
 // This method will be called when Electron has finished
@@ -75,7 +47,8 @@ app.on('ready', async () => {
             console.error('Vue Devtools failed to install:', e.toString());
         }
     }
-    createWindow();
+
+    showInitialDialog();
 });
 
 // Exit cleanly on request from parent process in development mode.
@@ -93,64 +66,66 @@ if (isDevelopment) {
     }
 }
 
+//
+// // Handle file
+// const documents = [];
+//
+// ipcMain.on('save', (event, arg) => {
+//     if (!documents.length) {
+//         const savedPath = dialog.showSaveDialogSync(win, {
+//             title: 'Save as...',
+//             defaultPath: 'Default.ltodo',
+//             filters: [
+//                 {
+//                     name: 'LiveTodo',
+//                     extension: ['ltodo'],
+//                 },
+//             ],
+//             securityScopedBookmarks: true,
+//         });
+//
+//         if (!savedPath) {
+//             return;
+//         }
+//
+//         documents.push(savedPath);
+//     }
+//
+//     win.setTitle(`${documents[0].split('/').pop()}`);
+//     fs.writeFileSync(documents[0], arg.data);
+// });
+//
+// function openFile() {
+//     const filePath = dialog.showOpenDialogSync(win, {
+//         title: 'Open file...',
+//         properties: ['openFile', 'createDirectory']
+//     });
+//
+//     if (!filePath) {
+//         return;
+//     }
+//
+//     documents.pop();
+//     documents.push(filePath.pop());
+//     win.setTitle(`${documents[0].split('/').pop()}`);
+//     const file = fs.readFileSync(documents[0]);
+//     const parser = new Parser(file.toString());
+//     win.webContents.send('open', parser.parse());
+// }
+//
+// const menu = new Menu();
+// menu.append(new MenuItem({
+//     label: 'LiveTodo',
+// }));
+// menu.append(new MenuItem({
+//     label: 'File',
+//     submenu: [{
+//         label: 'Open...',
+//         accelerator: 'CommandOrControl+O',
+//         click: openFile,
+//     }]
+// }))
+//
+// Menu.setApplicationMenu(menu)
 
-// Handle file
-const documents = [];
-
-ipcMain.on('save', (event, arg) => {
-    if (!documents.length) {
-        const savedPath = dialog.showSaveDialogSync(win, {
-            title: 'Save as...',
-            defaultPath: 'Default.ltodo',
-            filters: [
-                {
-                    name: 'LiveTodo',
-                    extension: ['ltodo'],
-                },
-            ],
-            securityScopedBookmarks: true,
-        });
-
-        if (!savedPath) {
-            return;
-        }
-
-        documents.push(savedPath);
-    }
-
-    win.setTitle(`${documents[0].split('/').pop()}`);
-    fs.writeFileSync(documents[0], arg.data);
-});
-
-function openFile() {
-    const filePath = dialog.showOpenDialogSync(win, {
-        title: 'Open file...',
-        properties: ['openFile', 'createDirectory']
-    });
-
-    if (!filePath) {
-        return;
-    }
-
-    documents.pop();
-    documents.push(filePath.pop());
-    win.setTitle(`${documents[0].split('/').pop()}`);
-    const file = fs.readFileSync(documents[0]);
-    const parser = new Parser(file.toString());
-    win.webContents.send('open', parser.parse());
-}
-
-const menu = new Menu();
-menu.append(new MenuItem({
-    label: 'LiveTodo',
-}));
-menu.append(new MenuItem({
-    label: 'File',
-    submenu: [{
-        label: 'Open...',
-        accelerator: 'CommandOrControl+O',
-        click: openFile,
-    }]
-}))
-
-Menu.setApplicationMenu(menu)
+initMenu();
